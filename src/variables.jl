@@ -68,8 +68,8 @@ function add_reserve!(prb::Problem)
     data = prb.data
     options = prb.options
     if options.use_contingency
-        @variable(model, 0 <= reserve_up[g in 1:size.gen, t in 1:size.stages] <= data.ramp_up[g])
-        @variable(model, 0 <= reserve_down[g in 1:size.gen, t in 1:size.stages] <= data.ramp_down[g])
+        @variable(model, 0 <= reserve_up[g in 1:size.gen, t in 1:size.stages] <= data.reserve_up_max[g])
+        @variable(model, 0 <= reserve_down[g in 1:size.gen, t in 1:size.stages] <= data.reserve_down_max[g])
     end
 end
 
@@ -125,4 +125,11 @@ function add_theta_pos!(prb::Problem)
     if options.use_contingency && options.use_kirchhoff
         @variable(model, theta_pos[1:size.bus, 1:size.stages, k=1:size.K])
     end
+end
+
+function add_fake_demand!(prb::Problem)
+    model = prb.model
+    size = prb.size
+
+    @variable(model, fake_demand[1:size.bus, 1:size.stages])
 end

@@ -21,14 +21,21 @@ end
     ramp_down::Vector{Float64}
     up_time::Vector{Int}
     down_time::Vector{Int}
-    turn_on_cost::Vector{Float64}
-    turn_off_cost::Vector{Float64}
+    on_cost::Vector{Float64}
+    off_cost::Vector{Float64}
     contingency_gen::Matrix{Bool}
     contingency_lin::Matrix{Bool}
     reserve_up_cost::Vector{Float64}
     reserve_down_cost::Vector{Float64}
     def_cost_rev::Vector{Float64}
     gen_cut_cost::Vector{Float64}
+    startup::Vector{Float64}
+    shutdown::Vector{Float64}
+    ISP::Vector{Float64}
+    ISC::Vector{Int}
+    IST::Vector{Int}
+    reserve_up_max::Vector{Float64}
+    reserve_down_max::Vector{Float64}
 end
 
 @kwdef mutable struct Size

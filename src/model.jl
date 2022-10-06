@@ -10,6 +10,17 @@ function build_model(prb::Problem)
     nothing
 end
 
+function rerun_model(prb::Problem)
+    model = prb.model
+
+    c = value.(model[:c])
+    @constraint(model, model[:c] .== c)
+    unset_binary.(model[:c])
+
+    solve_model(prb)
+    nothing
+end
+
 function solve_model(prb::Problem)
 
     optimize!(prb.model)
@@ -31,6 +42,8 @@ function add_variables!(prb::Problem)
     add_flow_pos!(prb)
     add_generation_pos!(prb)
     add_theta_pos!(prb)
+    add_fake_demand!(prb)
+
     nothing
 end
 
@@ -46,6 +59,7 @@ function add_constraints!(prb::Problem)
     add_RAMP_pos!(prb)
     add_DEF_CUT_MAX!(prb)
     add_GEN_DEV!(prb)
+    add_DUAL_FISHER!(prb)
     nothing
 end
 
