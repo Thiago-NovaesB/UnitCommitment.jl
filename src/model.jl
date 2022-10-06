@@ -82,9 +82,12 @@ function objective_function!(prb::Problem)
     if options.use_contingency
         reserve_up = model[:reserve_up]
         reserve_down = model[:reserve_down]
-        def_pos_max = model[:def_pos_max]
+        def_pos = model[:def_pos]
+        g_pos = model[:g_pos]
         g_cut_max = model[:g_cut_max]
-        add_to_expression!(FO, sum(reserve_up[i, t] * data.reserve_up_cost[i] + reserve_down[i, t] * data.reserve_down_cost[i] for i in 1:size.gen, t in 1:size.stages) + sum(def_pos_max[j, t] * data.def_cost_rev[j] + g_cut_max[j, t] * data.gen_cut_cost[j] for j in 1:size.bus, t in 1:size.stages))
+        add_to_expression!(FO, sum(reserve_up[i, t] * data.reserve_up_cost[i] + reserve_down[i, t] * data.reserve_down_cost[i] for i in 1:size.gen, t in 1:size.stages))
+        add_to_expression!(FO, sum(def_pos[j, t, k] * data.def_cost[j] + g_cut_max[j, t] * data.gen_cut_cost[j] for j in 1:size.bus, t in 1:size.stages, k in 1:size.K))
+        add_to_expression!(FO, sum(g_pos[i, t, k] * data.gen_cost[i] for i in 1:size.gen, t in 1:size.stages, k in 1:size.K))
     end
 
     @objective(model, Min, FO)

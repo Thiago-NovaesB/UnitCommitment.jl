@@ -1,6 +1,8 @@
 using UnitCommitment
 using HiGHS
 using JuMP
+using Xpress, XpressPSR
+XpressPSR.initialize()
 
 prb = UnitCommitment.Problem()
 data = prb.data
