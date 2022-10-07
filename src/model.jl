@@ -14,8 +14,14 @@ function rerun_model(prb::Problem)
     model = prb.model
 
     c = value.(model[:c])
+    on = value.(model[:on])
+    off = value.(model[:off])
     @constraint(model, model[:c] .== c)
+    @constraint(model, model[:on] .== on)
+    @constraint(model, model[:off] .== off)
     unset_binary.(model[:c])
+    unset_binary.(model[:on])
+    unset_binary.(model[:off])
 
     solve_model(prb)
     nothing
@@ -38,7 +44,6 @@ function add_variables!(prb::Problem)
     add_theta!(prb)
     add_reserve!(prb)
     add_deficit_pos!(prb)
-    add_generation_cut!(prb)
     add_flow_pos!(prb)
     add_generation_pos!(prb)
     add_theta_pos!(prb)
@@ -57,7 +62,6 @@ function add_constraints!(prb::Problem)
     add_KCL_pos!(prb)
     add_KVL_pos!(prb)
     add_RAMP_pos!(prb)
-    add_DEF_CUT_MAX!(prb)
     add_GEN_DEV!(prb)
     add_DUAL_FISHER!(prb)
     nothing
@@ -84,9 +88,8 @@ function objective_function!(prb::Problem)
         reserve_down = model[:reserve_down]
         def_pos = model[:def_pos]
         g_pos = model[:g_pos]
-        g_cut_max = model[:g_cut_max]
         add_to_expression!(FO, sum(reserve_up[i, t] * data.reserve_up_cost[i] + reserve_down[i, t] * data.reserve_down_cost[i] for i in 1:size.gen, t in 1:size.stages))
-        add_to_expression!(FO, sum(def_pos[j, t, k] * data.def_cost[j] + g_cut_max[j, t] * data.gen_cut_cost[j] for j in 1:size.bus, t in 1:size.stages, k in 1:size.K))
+        add_to_expression!(FO, sum(def_pos[j, t, k] * data.def_cost[j] for j in 1:size.bus, t in 1:size.stages, k in 1:size.K))
         add_to_expression!(FO, sum(g_pos[i, t, k] * data.gen_cost[i] for i in 1:size.gen, t in 1:size.stages, k in 1:size.K))
     end
 

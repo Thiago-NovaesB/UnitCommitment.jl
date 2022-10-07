@@ -34,10 +34,12 @@ function add_RAMP!(prb::Problem)
         c = model[:c]
         on = model[:on]
         off = model[:off]
+        reserve_up = model[:reserve_up]
+        reserve_down = model[:reserve_down]
         @constraint(model, RAMP_UP_0[i in 1:size.gen] , on[i,1]*data.startup[i] + data.ramp_up[i]*data.ISC[i] >= g[i,1] - data.ISP[i])
-        @constraint(model, RAMP_UP[t in 1:size.stages-1, i in 1:size.gen] , on[i,t+1]*data.startup[i] + data.ramp_up[i]*c[i,t] >= g[i,t+1] - g[i,t])
+        @constraint(model, RAMP_UP[t in 1:size.stages-1, i in 1:size.gen] , on[i,t+1]*data.startup[i] + data.ramp_up[i]*c[i,t] >= g[i,t+1] - g[i,t] + reserve_up[i,t+1] + reserve_down[i,t])
         @constraint(model, RAMP_DOWN_0[i in 1:size.gen], -data.ramp_down[i]*data.ISC[i] -off[i,1]*data.shutdown[i] <= g[i,1] - data.ISP[i])
-        @constraint(model, RAMP_DOWN[t in 1:size.stages-1, i in 1:size.gen], -data.ramp_down[i]*c[i,t+1] -off[i,t+1]*data.shutdown[i] <= g[i,t+1] - g[i,t])
+        @constraint(model, RAMP_DOWN[t in 1:size.stages-1, i in 1:size.gen], -data.ramp_down[i]*c[i,t+1] -off[i,t+1]*data.shutdown[i] <= g[i,t+1] - g[i,t] + reserve_up[i,t+1] + reserve_down[i,t])
     elseif options.use_ramp
         g = model[:g]
         @constraint(model, RAMP_UP_0[i in 1:size.gen], data.ramp_up[i] >= g[i, 1] - data.ISP[i])
@@ -59,16 +61,18 @@ function add_COMMIT!(prb::Problem)
         c = model[:c]
         on = model[:on]
         off = model[:off]
-        @constraint(model, COMMIT_UP[i in 1:size.gen, t in 1:size.stages], data.g_max[i] * c[i, t] >= g[i, t])
-        @constraint(model, COMMIT_DOWN[i in 1:size.gen, t in 1:size.stages], g[i,t] >= data.g_min[i] * c[i,t])
+        reserve_up = model[:reserve_up]
+        reserve_down = model[:reserve_down]
+
+        @constraint(model, RESERVE_UP[i in 1:size.gen, t in 1:size.stages], reserve_up[i, t] <= data.reserve_up_max[i]*c[i, t])
+        @constraint(model, RESERVE_DOWN[i in 1:size.gen, t in 1:size.stages], reserve_down[i, t] <= data.reserve_down_max[i]*c[i, t])
+
+        @constraint(model, COMMIT_down[i in 1:size.gen, t in 1:size.stages], data.g_max[i] * c[i, t] >= g[i, t] + reserve_up[i,t])
+        @constraint(model, COMMIT_DOWN[i in 1:size.gen, t in 1:size.stages], g[i,t] - reserve_down[i,t] >= data.g_min[i] * c[i,t])
 
         @constraint(model, STA_COMMIT_CONST_0[i in 1:size.gen], on[i, 1] - off[i, 1] == c[i, 1] - data.ISC[i])
-        @constraint(model, STA_on_0[i in 1:size.gen], on[i, 1] + off[i, 1] <= c[i, 1] + data.ISC[i])
-        @constraint(model, STA_off_0[i in 1:size.gen], on[i, 1] + off[i, 1] + c[i, 1] + data.ISC[i] <= 2)
 
         @constraint(model, STA_COMMIT_CONST[i in 1:size.gen, t in 1:size.stages-1], on[i, t+1] - off[i, t+1] == c[i, t+1] - c[i, t])
-        @constraint(model, STA_on[i in 1:size.gen, t in 1:size.stages-1], on[i, t+1] + off[i, t+1] <= c[i, t+1] + c[i, t])
-        @constraint(model, STA_off[i in 1:size.gen, t in 1:size.stages-1], on[i, t+1] + off[i, t+1] + c[i, t+1] + c[i, t] <= 2)
     end
 end
 
@@ -99,9 +103,8 @@ function add_KCL_pos!(prb::Problem)
         g_pos = model[:g_pos]
         f_pos = model[:f_pos]
         def_pos = model[:def_pos]
-        g_cut = model[:g_cut]
         fake_demand = model[:fake_demand]
-        @constraint(model, KCL_pos[i in 1:size.bus, t in 1:size.stages, k=1:size.K], sum(g_pos[j, t, k] for j in 1:size.gen if data.gen2bus[j] == i) + sum(f_pos[j, t, k] * data.A[i, j] for j in 1:size.circ) + def_pos[i, t, k] - g_cut[i, t, k] == fake_demand[i, t])
+        @constraint(model, KCL_pos[i in 1:size.bus, t in 1:size.stages, k=1:size.K], sum(g_pos[j, t, k] for j in 1:size.gen if data.gen2bus[j] == i) + sum(f_pos[j, t, k] * data.A[i, j] for j in 1:size.circ) + def_pos[i, t, k] == fake_demand[i, t])
     end
 end
 
@@ -139,21 +142,6 @@ function add_RAMP_pos!(prb::Problem)
         @constraint(model, RAMP_DOWN_pos_0[i in 1:size.gen, k=1:size.K], -data.ramp_down[i] <= g_pos[i, 1, k] - data.ISP[i])
         @constraint(model, RAMP_UP_pos[t in 1:size.stages-1, i in 1:size.gen, k=1:size.K], data.ramp_up[i] >= g_pos[i, t+1, k] - g_pos[i, t, k])
         @constraint(model, RAMP_DOWN_pos[t in 1:size.stages-1, i in 1:size.gen, k=1:size.K], -data.ramp_down[i] <= g_pos[i, t+1, k] - g_pos[i, t, k])
-    end
-end
-
-function add_DEF_CUT_MAX!(prb::Problem)
-    model = prb.model
-    size = prb.size
-    options = prb.options
-
-    if options.use_contingency
-        def_pos = model[:def_pos]
-        def_pos_max = model[:def_pos_max]
-        g_cut = model[:g_cut]
-        g_cut_max = model[:g_cut_max]
-        @constraint(model, DEF_MAX[i in 1:size.bus, t in 1:size.stages, k=1:size.K], def_pos_max[i, t] >= def_pos[i, t, k])
-        @constraint(model, GEN_MAX[i in 1:size.bus, t in 1:size.stages, k=1:size.K], g_cut_max[i, t] >= g_cut[i, t, k])
     end
 end
 

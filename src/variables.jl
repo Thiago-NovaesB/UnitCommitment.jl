@@ -40,7 +40,7 @@ function add_turn_on!(prb::Problem)
     size = prb.size
     options = prb.options
     if options.use_commit
-        @variable(model, 0 <= on[1:size.gen, 1:size.stages] <= 1)
+        @variable(model, on[1:size.gen, 1:size.stages], Bin)
     end
 end
 
@@ -49,7 +49,7 @@ function add_turn_off!(prb::Problem)
     size = prb.size
     options = prb.options
     if options.use_commit
-        @variable(model, 0 <= off[1:size.gen, 1:size.stages] <= 1)
+        @variable(model, off[1:size.gen, 1:size.stages], Bin)
     end
 end
 
@@ -79,18 +79,6 @@ function add_deficit_pos!(prb::Problem)
     options = prb.options
     if options.use_contingency
         @variable(model, 0 <= def_pos[i in 1:size.bus, 1:size.stages, k=1:size.K])
-        @variable(model, 0 <= def_pos_max[i in 1:size.bus, 1:size.stages])
-    end
-end
-
-function add_generation_cut!(prb::Problem)
-    model = prb.model
-    size = prb.size
-    options = prb.options
-
-    if options.use_contingency
-        @variable(model, 0 <= g_cut[i in 1:size.bus, 1:size.stages, k=1:size.K])
-        @variable(model, 0 <= g_cut_max[1:size.bus, 1:size.stages])
     end
 end
 
