@@ -138,10 +138,8 @@ function add_RAMP_pos!(prb::Problem)
         c = model[:c]
         on = model[:on]
         off = model[:off]
-        @constraint(model, RAMP_UP_pos_0[i in 1:size.gen, k=1:size.K] , data.contingency_gen[i,k]*(on[i,1]*data.startup[i] + data.ramp_up[i]*data.ISC[i]) >= data.contingency_gen[i,k]*(g_pos[i,1,k] - data.ISP[i]))
-        @constraint(model, RAMP_UP_pos[t in 1:size.stages-1, i in 1:size.gen, k=1:size.K], data.contingency_gen[i,k]*(on[i,t+1]*data.startup[i] + data.ramp_up[i]*c[i,t]) >= data.contingency_gen[i,k]*(g_pos[i,t+1,k] - g_pos[i,t,k]))
-        @constraint(model, RAMP_DOWN_pos_0[i in 1:size.gen, k=1:size.K], data.contingency_gen[i,k]*(-data.ramp_down[i]*data.ISC[i] -off[i,1]*data.shutdown[i]) <= data.contingency_gen[i,k]*(g_pos[i,1,k] - data.ISP[i]))
-        @constraint(model, RAMP_DOWN_pos[t in 1:size.stages-1, i in 1:size.gen, k=1:size.K], data.contingency_gen[i,k]*(-data.ramp_down[i]*c[i,t+1] -off[i,t+1]*data.shutdown[i]) <= data.contingency_gen[i,k]*(g_pos[i,t+1,k] - g_pos[i,t,k]))
+        @constraint(model, RAMP_UP_pos[t in 1:size.stages-1, i in 1:size.gen, k=1:size.K], on[i,t+1]*data.startup[i] + data.ramp_up[i]*c[i,t] >= g_pos[i,t+1,k] - g_pos[i,t,k])
+        @constraint(model, RAMP_DOWN_pos[t in 1:size.stages-1, i in 1:size.gen, k=1:size.K], -data.ramp_down[i]*c[i,t+1] -off[i,t+1]*data.shutdown[i] <= g_pos[i,t+1,k] - g_pos[i,t,k])
     elseif options.use_ramp && options.use_contingency
         g_pos = model[:g_pos]
         @constraint(model, RAMP_UP_pos_0[i in 1:size.gen, k=1:size.K], data.ramp_up[i] >= g_pos[i, 1, k] - data.ISP[i])

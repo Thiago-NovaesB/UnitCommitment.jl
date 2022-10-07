@@ -26,9 +26,22 @@ size.bus = 6
 size.circ = 8
 size.stages = 6
 size.gen = 3
-size.K = 1
-data.contingency_gen = reshape([false true true], 3, 1)
-data.contingency_lin = reshape([true true true true true true true true], 8, 1)
+size.K = 11
+# data.contingency_gen = reshape([false true true], 3, 1)
+# data.contingency_lin = reshape([true true true true true true true true], 8, 1)
+
+data.contingency_gen = [false true true true true true true true true true true;
+                        true false true true true true true true true true true;
+                        true true false true true true true true true true true]
+data.contingency_lin = [true true true false true true true true true true true;
+                        true true true true false true true true true true true;
+                        true true true true true false true true true true true;
+                        true true true true true true false true true true true;
+                        true true true true true true true false true true true;
+                        true true true true true true true true false true true;
+                        true true true true true true true true true false true;
+                        true true true true true true true true true true false]
+
 data.gen_cut_cost = [10000000, 10000000, 10000000, 10000000, 10000000, 10000000]
 data.def_cost_rev = [10000000, 10000000, 10000000, 10000000, 10000000, 10000000]
 data.g_max = [300, 200, 100]
