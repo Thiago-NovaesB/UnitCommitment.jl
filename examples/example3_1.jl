@@ -1,14 +1,12 @@
 using UnitCommitment
 using HiGHS
 using JuMP
-using Xpress, XpressPSR
-XpressPSR.initialize()
 
 prb = UnitCommitment.Problem()
 data = prb.data
 options = prb.options
 size = prb.size
-options.solver = Xpress.Optimizer
+options.solver = HiGHS.Optimizer
 
 
 data.f_max = zeros(8).+100

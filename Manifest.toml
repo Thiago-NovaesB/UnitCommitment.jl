@@ -2,7 +2,7 @@
 
 julia_version = "1.8.0"
 manifest_format = "2.0"
-project_hash = "ac6081e77ace35a4a0670624a0e3101447b17f24"
+project_hash = "e1da013d3500da72293afbce822017e8b3b05ac6"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -153,10 +153,6 @@ deps = ["LinearAlgebra", "MathOptInterface", "MutableArithmetics", "OrderedColle
 git-tree-sha1 = "8c0aacbcb0530d6fdc2650fe8cd312e7da452dbc"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
 version = "1.3.1"
-
-[[deps.LazyArtifacts]]
-deps = ["Artifacts", "Pkg"]
-uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
@@ -352,22 +348,6 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[deps.Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-
-[[deps.Xpress]]
-deps = ["Libdl", "LinearAlgebra", "MathOptInterface", "SparseArrays"]
-git-tree-sha1 = "fac5fe95ce2f540058195e8b8c2cb9f894ada64c"
-repo-rev = "master"
-repo-url = "https://github.com/jump-dev/Xpress.jl.git"
-uuid = "9e70acf3-d6c9-5be6-b5bd-4e2c73e3e054"
-version = "0.15.5"
-
-[[deps.XpressPSR]]
-deps = ["LazyArtifacts", "Libdl", "Xpress"]
-git-tree-sha1 = "ba5ee74c9d9fc6c7f056ace235d93640209ed34f"
-repo-rev = "v8_14"
-repo-url = "https://github.com/psrenergy/XpressPSR.jl.git"
-uuid = "3a57e2e4-7268-4354-91dd-d57606666fa4"
-version = "0.1.2"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]

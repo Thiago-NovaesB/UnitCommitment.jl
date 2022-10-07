@@ -8,7 +8,6 @@ options = prb.options
 size = prb.size
 options.solver = HiGHS.Optimizer
 
-
 data.f_max = [0]
 data.x = [1]
 data.gen2bus = [1, 1, 1]
