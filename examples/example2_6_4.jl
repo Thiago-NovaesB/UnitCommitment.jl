@@ -41,6 +41,8 @@ data.off_cost = [400, 250, 125]
 data.ISC = [1, 0, 0]
 data.ISP = [120, 0, 0]
 data.IST = [2, -99, -99]
+data.exo_up = [0, 0, 0, 0, 0, 0]
+data.exo_down = [0, 0, 0, 0, 0, 0]
 data.demand = [0 0 0 0 0 0;
                0 0 0 0 0 0;
                0 0 0 0 0 0;
@@ -63,3 +65,6 @@ UnitCommitment.rerun_model(prb)
 
 dual.(prb.model[:DUAL_FISHER])
 
+objective_value(prb.model)
+
+value.(prb.model[:g])

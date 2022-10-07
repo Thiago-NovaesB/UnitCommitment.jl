@@ -60,6 +60,7 @@ function add_constraints!(prb::Problem)
     add_DEF_CUT_MAX!(prb)
     add_GEN_DEV!(prb)
     add_DUAL_FISHER!(prb)
+    add_REVERSE_EXO!(prb)
     nothing
 end
 
@@ -71,8 +72,11 @@ function objective_function!(prb::Problem)
 
     g = model[:g]
     def = model[:def]
+    reserve_up = model[:reserve_up]
+    reserve_down = model[:reserve_down]
 
     FO = @expression(model, sum(g[i, t] * data.gen_cost[i] for i in 1:size.gen, t in 1:size.stages) + sum(def[j, t] * data.def_cost[j] for j in 1:size.bus, t in 1:size.stages))
+    add_to_expression!(FO, sum(reserve_up[i, t] * data.reserve_up_cost[i] + reserve_down[i, t] * data.reserve_down_cost[i] for i in 1:size.gen, t in 1:size.stages))
     if options.use_commit
         on = model[:on]
         off = model[:off]
@@ -80,12 +84,9 @@ function objective_function!(prb::Problem)
     end
 
     if options.use_contingency
-        reserve_up = model[:reserve_up]
-        reserve_down = model[:reserve_down]
         def_pos = model[:def_pos]
         g_pos = model[:g_pos]
         g_cut_max = model[:g_cut_max]
-        add_to_expression!(FO, sum(reserve_up[i, t] * data.reserve_up_cost[i] + reserve_down[i, t] * data.reserve_down_cost[i] for i in 1:size.gen, t in 1:size.stages))
         add_to_expression!(FO, sum(def_pos[j, t, k] * data.def_cost[j] + g_cut_max[j, t] * data.gen_cut_cost[j] for j in 1:size.bus, t in 1:size.stages, k in 1:size.K))
         add_to_expression!(FO, sum(g_pos[i, t, k] * data.gen_cost[i] for i in 1:size.gen, t in 1:size.stages, k in 1:size.K))
     end

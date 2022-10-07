@@ -36,6 +36,8 @@ end
     IST::Vector{Int}
     reserve_up_max::Vector{Float64}
     reserve_down_max::Vector{Float64}
+    exo_up::Vector{Float64}
+    exo_down::Vector{Float64}
 end
 
 @kwdef mutable struct Size

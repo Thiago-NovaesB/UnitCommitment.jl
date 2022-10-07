@@ -1,14 +1,12 @@
 using UnitCommitment
 using HiGHS
 using JuMP
-using Xpress, XpressPSR
-XpressPSR.initialize()
 
 prb = UnitCommitment.Problem()
 data = prb.data
 options = prb.options
 size = prb.size
-options.solver = Xpress.Optimizer
+options.solver = HiGHS.Optimizer
 
 
 data.f_max = zeros(8).+100
@@ -26,11 +24,6 @@ size.bus = 6
 size.circ = 8
 size.stages = 6
 size.gen = 3
-size.K = 1
-data.contingency_gen = reshape([false true true], 3, 1)
-data.contingency_lin = reshape([true true true true true true true true], 8, 1)
-data.gen_cut_cost = [10000000, 10000000, 10000000, 10000000, 10000000, 10000000]
-data.def_cost_rev = [10000000, 10000000, 10000000, 10000000, 10000000, 10000000]
 data.g_max = [300, 200, 100]
 data.g_min = [80, 50, 30]
 data.ramp_up = [50, 60, 70]
@@ -49,6 +42,8 @@ data.off_cost = [400, 250, 125]
 data.ISC = [1, 0, 0]
 data.ISP = [120, 0, 0]
 data.IST = [2, -99, -99]
+data.exo_up = [10, 10, 10, 10, 10, 10]
+data.exo_down = [10, 10, 10, 10, 10, 10]
 data.demand = [0 0 0 0 0 0;
                0 0 0 0 0 0;
                0 0 0 0 0 0;
@@ -59,9 +54,9 @@ options.use_kirchhoff = true
 options.use_ramp = true
 options.use_commit = true
 options.use_up_down_time = true
-options.use_contingency = true
+options.use_contingency = false
 
-data.def_cost = zeros(size.bus) .+ 5000
+data.def_cost = zeros(size.bus) .+ 1000
 
 
 UnitCommitment.build_model(prb)
@@ -69,13 +64,9 @@ UnitCommitment.solve_model(prb)
 termination_status(prb.model)
 UnitCommitment.rerun_model(prb)
 
-objective_value(prb.model)
 
 dual.(prb.model[:DUAL_FISHER])
 
-g = value.(prb.model[:g])
-def = value.(prb.model[:def])
-on = value.(prb.model[:on])
-off = value.(prb.model[:off])
-FO = sum(g[i, t] * data.gen_cost[i] for i in 1:size.gen, t in 1:size.stages) + sum(def[j, t] * data.def_cost[j] for j in 1:size.bus, t in 1:size.stages)
-FO += sum(on[i, t] * data.on_cost[i] + off[i, t] * data.off_cost[i] for i in 1:size.gen, t in 1:size.stages)
+objective_value(prb.model)
+
+value.(prb.model[:g])

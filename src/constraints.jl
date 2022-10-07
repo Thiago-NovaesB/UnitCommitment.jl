@@ -34,10 +34,12 @@ function add_RAMP!(prb::Problem)
         c = model[:c]
         on = model[:on]
         off = model[:off]
-        @constraint(model, RAMP_UP_0[i in 1:size.gen] , on[i,1]*data.startup[i] + data.ramp_up[i]*data.ISC[i] >= g[i,1] - data.ISP[i])
-        @constraint(model, RAMP_UP[t in 1:size.stages-1, i in 1:size.gen] , on[i,t+1]*data.startup[i] + data.ramp_up[i]*c[i,t] >= g[i,t+1] - g[i,t])
-        @constraint(model, RAMP_DOWN_0[i in 1:size.gen], -data.ramp_down[i]*data.ISC[i] -off[i,1]*data.shutdown[i] <= g[i,1] - data.ISP[i])
-        @constraint(model, RAMP_DOWN[t in 1:size.stages-1, i in 1:size.gen], -data.ramp_down[i]*c[i,t+1] -off[i,t+1]*data.shutdown[i] <= g[i,t+1] - g[i,t])
+        reserve_up = model[:reserve_up]
+        reserve_down = model[:reserve_down]
+        @constraint(model, RAMP_UP_0[i in 1:size.gen] , on[i,1]*data.startup[i] + data.ramp_up[i]*data.ISC[i] >= g[i,1] - data.ISP[i] + reserve_up[i,1])
+        @constraint(model, RAMP_UP[t in 1:size.stages-1, i in 1:size.gen] , on[i,t+1]*data.startup[i] + data.ramp_up[i]*c[i,t] >= g[i,t+1] - g[i,t] + reserve_up[i,t+1] + reserve_down[i,t])
+        @constraint(model, RAMP_DOWN_0[i in 1:size.gen] , -off[i,1]*data.shutdown[i] - data.ramp_down[i]*c[i,1] <= - data.ISP[i] + g[i,1] - reserve_down[i,1])
+        @constraint(model, RAMP_DOWN[t in 1:size.stages-1, i in 1:size.gen] , -off[i,t+1]*data.shutdown[i] - data.ramp_down[i]*c[i,t+1] <= -g[i,t] + g[i,t+1] - reserve_up[i,t] - reserve_down[i,t+1])
     elseif options.use_ramp
         g = model[:g]
         @constraint(model, RAMP_UP_0[i in 1:size.gen], data.ramp_up[i] >= g[i, 1] - data.ISP[i])
@@ -59,8 +61,15 @@ function add_COMMIT!(prb::Problem)
         c = model[:c]
         on = model[:on]
         off = model[:off]
-        @constraint(model, COMMIT_UP[i in 1:size.gen, t in 1:size.stages], data.g_max[i] * c[i, t] >= g[i, t])
-        @constraint(model, COMMIT_DOWN[i in 1:size.gen, t in 1:size.stages], g[i,t] >= data.g_min[i] * c[i,t])
+        reserve_up = model[:reserve_up]
+        reserve_down = model[:reserve_down]
+
+        
+        @constraint(model, R_UP[i in 1:size.gen, t in 1:size.stages], data.reserve_up_max[i] * c[i, t] >= reserve_up[i,t])
+        @constraint(model, R_DOWN[i in 1:size.gen, t in 1:size.stages], reserve_down[i,t] <= data.reserve_down_max[i] * c[i,t])
+
+        @constraint(model, COMMIT_UP[i in 1:size.gen, t in 1:size.stages], data.g_max[i] * c[i, t] >= g[i, t] + reserve_up[i,t])
+        @constraint(model, COMMIT_DOWN[i in 1:size.gen, t in 1:size.stages], g[i,t] - reserve_down[i,t]>= data.g_min[i] * c[i,t])
 
         @constraint(model, STA_COMMIT_CONST_0[i in 1:size.gen], on[i, 1] - off[i, 1] == c[i, 1] - data.ISC[i])
         @constraint(model, STA_on_0[i in 1:size.gen], on[i, 1] + off[i, 1] <= c[i, 1] + data.ISC[i])
@@ -171,6 +180,17 @@ function add_GEN_DEV!(prb::Problem)
         @constraint(model, GEN_DEV_MIN[i in 1:size.gen, t in 1:size.stages, k=1:size.K], (g[i, t] - reserve_down[i, t]) * data.contingency_gen[i, k] <= g_pos[i, t, k])
         @constraint(model, GEN_DEV_MAX[i in 1:size.gen, t in 1:size.stages, k=1:size.K], (g[i, t] + reserve_up[i, t]) * data.contingency_gen[i, k] >= g_pos[i, t, k])
     end
+end
+
+function add_REVERSE_EXO!(prb::Problem)
+    model = prb.model
+    data = prb.data
+    size = prb.size
+
+    reserve_up = model[:reserve_up]
+    reserve_down = model[:reserve_down]
+    @constraint(model, EXO1[t=1:size.stages], sum(reserve_up[:, t]) >= data.exo_up[t])
+    @constraint(model, EXO2[t=1:size.stages], sum(reserve_down[:, t]) >= data.exo_down[t])
 end
 
 function add_DUAL_FISHER!(prb::Problem)
