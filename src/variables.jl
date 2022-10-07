@@ -66,11 +66,9 @@ function add_reserve!(prb::Problem)
     model = prb.model
     size = prb.size
     data = prb.data
-    options = prb.options
-    if options.use_contingency
-        @variable(model, 0 <= reserve_up[g in 1:size.gen, t in 1:size.stages] <= data.reserve_up_max[g])
-        @variable(model, 0 <= reserve_down[g in 1:size.gen, t in 1:size.stages] <= data.reserve_down_max[g])
-    end
+    
+    @variable(model, 0 <= reserve_up[g in 1:size.gen, t in 1:size.stages] <= data.reserve_up_max[g])
+    @variable(model, 0 <= reserve_down[g in 1:size.gen, t in 1:size.stages] <= data.reserve_down_max[g])
 end
 
 function add_deficit_pos!(prb::Problem)
