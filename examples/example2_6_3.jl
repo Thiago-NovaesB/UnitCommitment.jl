@@ -1,6 +1,7 @@
 using UnitCommitment
 using HiGHS
 using JuMP
+using DelimitedFiles
 
 prb = UnitCommitment.Problem()
 data = prb.data
@@ -57,4 +58,35 @@ dual.(prb.model[:DUAL_FISHER])
 
 objective_value(prb.model)
 
-value.(prb.model[:g])
+print("Custo total do sistema:  ")
+println(round(objective_value(prb.model)))
+
+print("\n")
+println("Geração:")
+writedlm(stdout,round.(value.(prb.model[:g])))
+println("*colunas: horas (de 1 a 6); linhas: geradores (do 1 ao 3)")
+
+print("\n")
+println("Dual:")
+writedlm(stdout,dual.(prb.model[:DUAL_FISHER]))
+println("*colunas: horas (de 1 a 6); linhas: barras (1)")
+
+print("\n")
+println("Deficit:")
+writedlm(stdout,value.(prb.model[:def]))
+println("*colunas: horas (de 1 a 6); linhas: barras (1)")
+
+print("\n")
+println("Status dos geradores:")
+writedlm(stdout,round.(value.(prb.model[:c])))
+println("*colunas: horas (de 1 a 6); linhas: geradores (do 1 ao 3)")
+
+print("\n")
+println("Reserva de subida:")
+writedlm(stdout,round.(value.(prb.model[:reserve_up]),digits=1))
+println("*colunas: horas (de 1 a 6); linhas: geradores (do 1 ao 3)")
+
+print("\n")
+println("Reserva de descida:")
+writedlm(stdout,round.(value.(prb.model[:reserve_down]),digits=1))
+println("*colunas: horas (de 1 a 6); linhas: geradores (do 1 ao 3)")
